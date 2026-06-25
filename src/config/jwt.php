@@ -45,3 +45,17 @@ function verifierToken(): ?object
         return null; // token invalide ou expiré
     }
 }
+
+function verifierAdmin(): ?object
+{
+    // 1. On réutilise la fonction qui existe déjà : est-ce que la personne est connectée ?
+    $utilisateur = verifierToken();
+
+    // 2. Si pas connecté du tout, ou si le rôle n'est pas "admin" → on bloque
+    if (!$utilisateur || $utilisateur->role !== 'admin') {
+        return null;
+    }
+
+    // 3. Tout est bon : on renvoie les infos (id, email, role, pseudo)
+    return $utilisateur;
+}

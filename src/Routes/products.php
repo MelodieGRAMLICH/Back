@@ -5,5 +5,21 @@ Flight::route('GET /api/products/@categorie', function($categorie) {
     $stmt = $db->prepare("SELECT * FROM products WHERE categories = ?");
     $stmt->execute([$categorie]);
     $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
     Flight::json(array_values($products));
+
+});
+
+Flight::route('GET /api/products/detail/@name', function($name) {
+    $db = Flight::get('db');
+
+    $stmt = $db->prepare(
+        "SELECT * FROM products WHERE name = ?"
+    );
+
+    $stmt->execute([$name]);
+
+    $product = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    Flight::json($product);
 });

@@ -13,6 +13,7 @@ require __DIR__ . '/../src/config/jwt.php';
 require __DIR__ . '/../src/Routes/status.php';
 require __DIR__ . '/../src/Routes/auth.php';
 require __DIR__ . '/../src/Routes/products.php';
+require __DIR__ . '/../src/Routes/admin.php';
 
 Flight::before('start', function() {
     header('Access-Control-Allow-Origin: http://localhost:5173');
