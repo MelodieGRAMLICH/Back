@@ -3,8 +3,7 @@
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 
-// ─── Crée un token JWT pour un utilisateur ───────────────────────────────────
-// Appelé après une inscription ou connexion réussie
+
 function creerToken(array $utilisateur): string
 {
     $cleSecrete = $_ENV['JWT_SECRET'];

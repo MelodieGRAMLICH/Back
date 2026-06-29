@@ -5,111 +5,90 @@ error_reporting(E_ALL);
 
 class AdminController
 {
-
-    public static function listerUtilisateurs(): void
+ 
+    private static function requireAdmin(): mixed
     {
         $admin = verifierAdmin();
 
         if (!$admin) {
             Flight::json(['erreur' => 'Accès refusé : réservé aux administrateurs'], 403);
-            return;
+            return null;
         }
 
-        $db = Flight::get('db');
+        return $admin;
+    }
+
+    
+    public static function listerUtilisateurs(): void
+    {
+        if (!($admin = self::requireAdmin())) return;
+
+        $db   = Flight::get('db');
         $stmt = $db->prepare("
             SELECT id, pseudo, email, role, date_creation
             FROM utilisateurs
             ORDER BY date_creation DESC
         ");
         $stmt->execute();
-        $utilisateurs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        Flight::json($utilisateurs);
+        Flight::json($stmt->fetchAll(PDO::FETCH_ASSOC));
     }
 
-    public static function changerRole($id): void
+    public static function changerRole(int $id): void
     {
-        $admin = verifierAdmin();
+        if (!($admin = self::requireAdmin())) return;
 
-        if (!$admin) {
-            Flight::json(['erreur' => 'Accès refusé : réservé aux administrateurs'], 403);
-            return;
-        }
-
-        if ((int)$admin->sub === (int)$id) {
+        if ((int)$admin->sub === $id) {
             Flight::json(['erreur' => 'Tu ne peux pas modifier ton propre rôle'], 400);
             return;
         }
 
-        $donnees = Flight::request()->data;
-        $nouveauRole = trim($donnees->role ?? '');
+        $nouveauRole = trim(Flight::request()->data->role ?? '');
 
-        $rolesAutorises = ['client', 'admin'];
-        if (!in_array($nouveauRole, $rolesAutorises)) {
+        if (!in_array($nouveauRole, ['client', 'admin'])) {
             Flight::json(['erreur' => 'Rôle invalide'], 400);
             return;
         }
 
-        $db = Flight::get('db');
+        $db   = Flight::get('db');
         $stmt = $db->prepare("UPDATE utilisateurs SET role = ? WHERE id = ?");
         $stmt->execute([$nouveauRole, $id]);
 
         Flight::json(['message' => 'Rôle mis à jour avec succès']);
     }
 
-        public static function supprimerUtilisateur($id): void
+    public static function supprimerUtilisateur(int $id): void
     {
-        
-        $admin = verifierAdmin();
+        if (!($admin = self::requireAdmin())) return;
 
-        if (!$admin) {
-            Flight::json(['erreur' => 'Accès refusé : réservé aux administrateurs'], 403);
-            return;
-        }
-
-        
-        if ((int)$admin->sub === (int)$id) {
+        if ((int)$admin->sub === $id) {
             Flight::json(['erreur' => 'Tu ne peux pas supprimer ton propre compte'], 400);
             return;
         }
 
-        
-        $db = Flight::get('db');
+        $db   = Flight::get('db');
         $stmt = $db->prepare("DELETE FROM utilisateurs WHERE id = ?");
         $stmt->execute([$id]);
 
         Flight::json(['message' => 'Utilisateur supprimé avec succès']);
     }
 
-        public static function listerProduits(): void
+    public static function listerProduits(): void
     {
-        $admin = verifierAdmin();
+        if (!self::requireAdmin()) return;
 
-        if (!$admin) {
-            Flight::json(['erreur' => 'Accès refusé : réservé aux administrateurs'], 403);
-            return;
-        }
-
-        $db = Flight::get('db');
+        $db   = Flight::get('db');
         $stmt = $db->prepare("SELECT * FROM products ORDER BY id DESC");
         $stmt->execute();
-        $produits = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        Flight::json($produits);
+        Flight::json($stmt->fetchAll(PDO::FETCH_ASSOC));
     }
 
-        public static function creerProduit(): void
+    public static function creerProduit(): void
     {
-        $admin = verifierAdmin();
+        if (!self::requireAdmin()) return;
 
-        if (!$admin) {
-            Flight::json(['erreur' => 'Accès refusé : réservé aux administrateurs'], 403);
-            return;
-        }
-
-
-        $donnees = Flight::request()->data;
-
+        $donnees     = Flight::request()->data;
         $name        = trim($donnees->name ?? '');
         $description = trim($donnees->description ?? '');
         $price       = $donnees->price ?? null;
@@ -117,40 +96,26 @@ class AdminController
         $image       = trim($donnees->image ?? '');
         $categories  = trim($donnees->categories ?? '');
 
-
         if (empty($name) || $price === null || $quantity === null) {
             Flight::json(['erreur' => 'Le nom, le prix et la quantité sont obligatoires'], 400);
             return;
         }
 
-        $db = Flight::get('db');
+        $db   = Flight::get('db');
         $stmt = $db->prepare("
             INSERT INTO products (name, description, price, quantity, image, categories)
             VALUES (?, ?, ?, ?, ?, ?)
         ");
         $stmt->execute([$name, $description, $price, $quantity, $image, $categories]);
 
-        $nouvelId = $db->lastInsertId();
-
-        Flight::json([
-            'message' => 'Produit créé avec succès',
-            'id'      => $nouvelId,
-        ], 201);
+        Flight::json(['message' => 'Produit créé avec succès', 'id' => $db->lastInsertId()], 201);
     }
 
-    // ─── MODIFIER UN PRODUIT (route protégée admin) ──────────────────────────
-
-    public static function modifierProduit($id): void
+    public static function modifierProduit(int $id): void
     {
-        $admin = verifierAdmin();
+        if (!self::requireAdmin()) return;
 
-        if (!$admin) {
-            Flight::json(['erreur' => 'Accès refusé : réservé aux administrateurs'], 403);
-            return;
-        }
-
-        $donnees = Flight::request()->data;
-
+        $donnees     = Flight::request()->data;
         $name        = trim($donnees->name ?? '');
         $description = trim($donnees->description ?? '');
         $price       = $donnees->price ?? null;
@@ -163,7 +128,7 @@ class AdminController
             return;
         }
 
-        $db = Flight::get('db');
+        $db   = Flight::get('db');
         $stmt = $db->prepare("
             UPDATE products
             SET name = ?, description = ?, price = ?, quantity = ?, image = ?, categories = ?
@@ -174,16 +139,11 @@ class AdminController
         Flight::json(['message' => 'Produit modifié avec succès']);
     }
 
-    public static function supprimerProduit($id): void
+    public static function supprimerProduit(int $id): void
     {
-        $admin = verifierAdmin();
+        if (!self::requireAdmin()) return;
 
-        if (!$admin) {
-            Flight::json(['erreur' => 'Accès refusé : réservé aux administrateurs'], 403);
-            return;
-        }
-
-        $db = Flight::get('db');
+        $db   = Flight::get('db');
         $stmt = $db->prepare("DELETE FROM products WHERE id = ?");
         $stmt->execute([$id]);
 
