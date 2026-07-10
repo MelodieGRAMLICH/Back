@@ -1,25 +1,24 @@
 <?php
 
-Flight::route('GET /api/products/@categorie', function($categorie) {
+Flight::route('GET /api/produits/@categorie', function($categorie) {
     $db = Flight::get('db');
-    $stmt = $db->prepare("SELECT * FROM products WHERE categories = ?");
+    $stmt = $db->prepare("SELECT * FROM produits WHERE categories = ?");
     $stmt->execute([$categorie]);
-    $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $produits = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-    Flight::json(array_values($products));
-
+    Flight::json(array_values($produits));
 });
 
-Flight::route('GET /api/products/detail/@name', function($name) {
+Flight::route('GET /api/produits/detail/@name', function($name) {
     $db = Flight::get('db');
 
     $stmt = $db->prepare(
-        "SELECT * FROM products WHERE name = ?"
+        "SELECT * FROM produits WHERE name = ?"
     );
 
     $stmt->execute([$name]);
 
-    $product = $stmt->fetch(PDO::FETCH_ASSOC);
+    $produit = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    Flight::json($product);
+    Flight::json($produit);
 });

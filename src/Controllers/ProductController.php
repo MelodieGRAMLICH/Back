@@ -12,7 +12,7 @@ class ProductController
     // Liste des produits
     public function getAll()
     {
-        $stmt = $this->db->query("SELECT * FROM products");
+        $stmt = $this->db->query("SELECT * FROM produits");
         Flight::json($stmt->fetchAll(PDO::FETCH_ASSOC));
     }
 
@@ -22,7 +22,7 @@ class ProductController
         $data = Flight::request()->data;
 
         $sql = "
-            INSERT INTO products
+            INSERT INTO produits
             (name, description, price, quantity, image, categories)
             VALUES (?, ?, ?, ?, ?, ?)
         ";
@@ -47,7 +47,7 @@ class ProductController
     public function delete($id)
     {
         $stmt = $this->db->prepare(
-            "DELETE FROM products WHERE id = ?"
+            "DELETE FROM produits WHERE id = ?"
         );
 
         $stmt->execute([$id]);
@@ -63,7 +63,7 @@ class ProductController
         $data = Flight::request()->data;
 
         $sql = "
-            UPDATE products
+            UPDATE produits
             SET
             name=?,
             description=?,

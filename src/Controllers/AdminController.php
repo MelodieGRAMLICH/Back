@@ -78,7 +78,7 @@ class AdminController
         if (!self::requireAdmin()) return;
 
         $db   = Flight::get('db');
-        $stmt = $db->prepare("SELECT * FROM products ORDER BY id DESC");
+        $stmt = $db->prepare("SELECT * FROM produits ORDER BY id DESC");
         $stmt->execute();
 
         Flight::json($stmt->fetchAll(PDO::FETCH_ASSOC));
@@ -103,7 +103,7 @@ class AdminController
 
         $db   = Flight::get('db');
         $stmt = $db->prepare("
-            INSERT INTO products (name, description, price, quantity, image, categories)
+            INSERT INTO produits (name, description, price, quantity, image, categories)
             VALUES (?, ?, ?, ?, ?, ?)
         ");
         $stmt->execute([$name, $description, $price, $quantity, $image, $categories]);
@@ -130,7 +130,7 @@ class AdminController
 
         $db   = Flight::get('db');
         $stmt = $db->prepare("
-            UPDATE products
+            UPDATE produits
             SET name = ?, description = ?, price = ?, quantity = ?, image = ?, categories = ?
             WHERE id = ?
         ");
@@ -144,7 +144,7 @@ class AdminController
         if (!self::requireAdmin()) return;
 
         $db   = Flight::get('db');
-        $stmt = $db->prepare("DELETE FROM products WHERE id = ?");
+        $stmt = $db->prepare("DELETE FROM produits WHERE id = ?");
         $stmt->execute([$id]);
 
         Flight::json(['message' => 'Produit supprimé avec succès']);
