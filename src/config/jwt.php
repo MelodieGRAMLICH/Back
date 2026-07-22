@@ -4,28 +4,29 @@ use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 
 
-function creerToken(array $utilisateur): string
+function createToken(array $user): string
 {
-    $cleSecrete = $_ENV['JWT_SECRET'];
-    $duree      = (int) $_ENV['JWT_EXPIRATION'];
+    $secretKey = $_ENV['JWT_SECRET'];
+    $duration  = (int) $_ENV['JWT_EXPIRATION'];
     $payload = [
         'iat'   => time(),                    // "issued at" : quand le token a été créé
-        'exp'   => time() + $duree,           // "expires" : quand il expire
-        'sub'   => $utilisateur['id'],        // "subject" : l'id de l'utilisateur
-        'email' => $utilisateur['email'],
-        'role'  => $utilisateur['role'],
-        'pseudo'=> $utilisateur['pseudo'],
+        'exp'   => time() + $duration,        // "expires" : quand il expire
+        'sub'   => $user['id'],               // "subject" : l'id de l'utilisateur
+        'email' => $user['email'],
+        'role'  => $user['role'],
+        'pseudo'=> $user['pseudo'],
     ];
-    
+
 
     // JWT::encode() fabrique le token signé avec notre clé secrète
-    $jwt = JWT::encode($payload, $cleSecrete, 'HS256');
+    $jwt = JWT::encode($payload, $secretKey, 'HS256');
     return $jwt;
 }
 
+
 // ─── Vérifie et décode un token reçu ─────────────────────────────────────────
 // Retourne les infos de l'utilisateur, ou null si le token est invalide/expiré
-function verifierToken(): ?object
+function verifyToken(): ?object
 {
     // Le token est envoyé dans le header HTTP : "Authorization: Bearer montoken..."
     $headers = getallheaders();
@@ -45,16 +46,17 @@ function verifierToken(): ?object
     }
 }
 
-function verifierAdmin(): ?object
+
+function verifyAdmin(): ?object
 {
     // 1. On réutilise la fonction qui existe déjà : est-ce que la personne est connectée ?
-    $utilisateur = verifierToken();
+    $user = verifyToken();
 
     // 2. Si pas connecté du tout, ou si le rôle n'est pas "admin" → on bloque
-    if (!$utilisateur || $utilisateur->role !== 'admin') {
+    if (!$user || $user->role !== 'admin') {
         return null;
     }
 
     // 3. Tout est bon : on renvoie les infos (id, email, role, pseudo)
-    return $utilisateur;
+    return $user;
 }

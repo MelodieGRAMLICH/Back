@@ -1,24 +1,15 @@
 <?php
 
-Flight::route('GET /api/produits/@categorie', function($categorie) {
-    $db = Flight::get('db');
-    $stmt = $db->prepare("SELECT * FROM produits WHERE categories = ?");
-    $stmt->execute([$categorie]);
-    $produits = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
-    Flight::json(array_values($produits));
+require_once __DIR__ . '/../Models/Product.php';
+
+Flight::route('GET /api/produits/@category', function ($category) {
+    $products = Product::byCategory($category);
+
+    Flight::json(array_values($products));
 });
 
-Flight::route('GET /api/produits/detail/@name', function($name) {
-    $db = Flight::get('db');
+Flight::route('GET /api/produits/detail/@name', function ($name) {
+    $product = Product::byName($name);
 
-    $stmt = $db->prepare(
-        "SELECT * FROM produits WHERE name = ?"
-    );
-
-    $stmt->execute([$name]);
-
-    $produit = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    Flight::json($produit);
+    Flight::json($product);
 });

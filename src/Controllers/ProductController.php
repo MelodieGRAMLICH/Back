@@ -1,19 +1,13 @@
 <?php
 
+require_once __DIR__ . '/../Models/Product.php';
+
 class ProductController
 {
-    private $db;
-
-    public function __construct($db)
-    {
-        $this->db = $db;
-    }
-
     // Liste des produits
     public function getAll()
     {
-        $stmt = $this->db->query("SELECT * FROM produits");
-        Flight::json($stmt->fetchAll(PDO::FETCH_ASSOC));
+        Flight::json(Product::listAll());
     }
 
     // Ajouter
@@ -21,36 +15,25 @@ class ProductController
     {
         $data = Flight::request()->data;
 
-        $sql = "
-            INSERT INTO produits
-            (name, description, price, quantity, image, categories)
-            VALUES (?, ?, ?, ?, ?, ?)
-        ";
-
-        $stmt = $this->db->prepare($sql);
-
-        $stmt->execute([
+        $id = Product::create(
             $data->name,
             $data->description,
             $data->price,
             $data->quantity,
             $data->image,
             $data->categories
-        ]);
+        );
 
         Flight::json([
-            "message" => "Produit ajouté"
+            "message" => "Produit ajouté",
+            "id"      => $id
         ]);
     }
 
     // Supprimer
     public function delete($id)
     {
-        $stmt = $this->db->prepare(
-            "DELETE FROM produits WHERE id = ?"
-        );
-
-        $stmt->execute([$id]);
+        Product::delete($id);
 
         Flight::json([
             "message" => "Produit supprimé"
@@ -62,29 +45,15 @@ class ProductController
     {
         $data = Flight::request()->data;
 
-        $sql = "
-            UPDATE produits
-            SET
-            name=?,
-            description=?,
-            price=?,
-            quantity=?,
-            image=?,
-            categories=?
-            WHERE id=?
-        ";
-
-        $stmt = $this->db->prepare($sql);
-
-        $stmt->execute([
+        Product::update(
+            $id,
             $data->name,
             $data->description,
             $data->price,
             $data->quantity,
             $data->image,
-            $data->categories,
-            $id
-        ]);
+            $data->categories
+        );
 
         Flight::json([
             "message" => "Produit modifié"

@@ -1,14 +1,17 @@
 <?php
 
+require_once __DIR__ . '/../Models/User.php';
+require_once __DIR__ . '/../Models/Product.php';
+
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
 class AdminController
 {
- 
+
     private static function requireAdmin(): mixed
     {
-        $admin = verifierAdmin();
+        $admin = verifyAdmin();
 
         if (!$admin) {
             Flight::json(['erreur' => 'Accès refusé : réservé aux administrateurs'], 403);
@@ -18,23 +21,14 @@ class AdminController
         return $admin;
     }
 
-    
-    public static function listerUtilisateurs(): void
+    public static function listUsers(): void
     {
-        if (!($admin = self::requireAdmin())) return;
+        if (!self::requireAdmin()) return;
 
-        $db   = Flight::get('db');
-        $stmt = $db->prepare("
-            SELECT id, pseudo, email, role, date_creation
-            FROM utilisateurs
-            ORDER BY date_creation DESC
-        ");
-        $stmt->execute();
-
-        Flight::json($stmt->fetchAll(PDO::FETCH_ASSOC));
+        Flight::json(User::listAll());
     }
 
-    public static function changerRole(int $id): void
+    public static function changeRole(int $id): void
     {
         if (!($admin = self::requireAdmin())) return;
 
@@ -43,21 +37,19 @@ class AdminController
             return;
         }
 
-        $nouveauRole = trim(Flight::request()->data->role ?? '');
+        $newRole = trim(Flight::request()->data->role ?? '');
 
-        if (!in_array($nouveauRole, ['client', 'admin'])) {
+        if (!in_array($newRole, ['client', 'admin'])) {
             Flight::json(['erreur' => 'Rôle invalide'], 400);
             return;
         }
 
-        $db   = Flight::get('db');
-        $stmt = $db->prepare("UPDATE utilisateurs SET role = ? WHERE id = ?");
-        $stmt->execute([$nouveauRole, $id]);
+        User::changeRole($id, $newRole);
 
         Flight::json(['message' => 'Rôle mis à jour avec succès']);
     }
 
-    public static function supprimerUtilisateur(int $id): void
+    public static function deleteUser(int $id): void
     {
         if (!($admin = self::requireAdmin())) return;
 
@@ -66,86 +58,67 @@ class AdminController
             return;
         }
 
-        $db   = Flight::get('db');
-        $stmt = $db->prepare("DELETE FROM utilisateurs WHERE id = ?");
-        $stmt->execute([$id]);
+        User::delete($id);
 
         Flight::json(['message' => 'Utilisateur supprimé avec succès']);
     }
 
-    public static function listerProduits(): void
+    public static function listProducts(): void
     {
         if (!self::requireAdmin()) return;
 
-        $db   = Flight::get('db');
-        $stmt = $db->prepare("SELECT * FROM produits ORDER BY id DESC");
-        $stmt->execute();
-
-        Flight::json($stmt->fetchAll(PDO::FETCH_ASSOC));
+        Flight::json(Product::listAll());
     }
 
-    public static function creerProduit(): void
+    public static function createProduct(): void
     {
         if (!self::requireAdmin()) return;
 
-        $donnees     = Flight::request()->data;
-        $name        = trim($donnees->name ?? '');
-        $description = trim($donnees->description ?? '');
-        $price       = $donnees->price ?? null;
-        $quantity    = $donnees->quantity ?? null;
-        $image       = trim($donnees->image ?? '');
-        $categories  = trim($donnees->categories ?? '');
+        $data        = Flight::request()->data;
+        $name        = trim($data->name ?? '');
+        $description = trim($data->description ?? '');
+        $price       = $data->price ?? null;
+        $quantity    = $data->quantity ?? null;
+        $image       = trim($data->image ?? '');
+        $categories  = trim($data->categories ?? '');
 
         if (empty($name) || $price === null || $quantity === null) {
             Flight::json(['erreur' => 'Le nom, le prix et la quantité sont obligatoires'], 400);
             return;
         }
 
-        $db   = Flight::get('db');
-        $stmt = $db->prepare("
-            INSERT INTO produits (name, description, price, quantity, image, categories)
-            VALUES (?, ?, ?, ?, ?, ?)
-        ");
-        $stmt->execute([$name, $description, $price, $quantity, $image, $categories]);
+        $id = Product::create($name, $description, $price, $quantity, $image, $categories);
 
-        Flight::json(['message' => 'Produit créé avec succès', 'id' => $db->lastInsertId()], 201);
+        Flight::json(['message' => 'Produit créé avec succès', 'id' => $id], 201);
     }
 
-    public static function modifierProduit(int $id): void
+    public static function updateProduct(int $id): void
     {
         if (!self::requireAdmin()) return;
 
-        $donnees     = Flight::request()->data;
-        $name        = trim($donnees->name ?? '');
-        $description = trim($donnees->description ?? '');
-        $price       = $donnees->price ?? null;
-        $quantity    = $donnees->quantity ?? null;
-        $image       = trim($donnees->image ?? '');
-        $categories  = trim($donnees->categories ?? '');
+        $data        = Flight::request()->data;
+        $name        = trim($data->name ?? '');
+        $description = trim($data->description ?? '');
+        $price       = $data->price ?? null;
+        $quantity    = $data->quantity ?? null;
+        $image       = trim($data->image ?? '');
+        $categories  = trim($data->categories ?? '');
 
         if (empty($name) || $price === null || $quantity === null) {
             Flight::json(['erreur' => 'Le nom, le prix et la quantité sont obligatoires'], 400);
             return;
         }
 
-        $db   = Flight::get('db');
-        $stmt = $db->prepare("
-            UPDATE produits
-            SET name = ?, description = ?, price = ?, quantity = ?, image = ?, categories = ?
-            WHERE id = ?
-        ");
-        $stmt->execute([$name, $description, $price, $quantity, $image, $categories, $id]);
+        Product::update($id, $name, $description, $price, $quantity, $image, $categories);
 
         Flight::json(['message' => 'Produit modifié avec succès']);
     }
 
-    public static function supprimerProduit(int $id): void
+    public static function deleteProduct(int $id): void
     {
         if (!self::requireAdmin()) return;
 
-        $db   = Flight::get('db');
-        $stmt = $db->prepare("DELETE FROM produits WHERE id = ?");
-        $stmt->execute([$id]);
+        Product::delete($id);
 
         Flight::json(['message' => 'Produit supprimé avec succès']);
     }

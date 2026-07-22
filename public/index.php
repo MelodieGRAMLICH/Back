@@ -15,15 +15,15 @@ require __DIR__ . '/../src/Routes/products.php';
 require __DIR__ . '/../src/Routes/admin.php';
 
 Flight::before('start', function() {
-    $originsAutorisees = [
+    $allowedOrigins = [
         'http://localhost:5173',
         'https://TON-PROJET.vercel.app',
     ];
 
-    $origine = $_SERVER['HTTP_ORIGIN'] ?? '';
+    $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 
-    if (in_array($origine, $originsAutorisees)) {
-        header('Access-Control-Allow-Origin: ' . $origine);
+    if (in_array($origin, $allowedOrigins)) {
+        header('Access-Control-Allow-Origin: ' . $origin);
     }
 
     header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
@@ -37,8 +37,8 @@ Flight::before('start', function() {
 
 Flight::set('flight.allow_overrides', true);
 
-Flight::route('GET /images/@fichier', function($fichier) {
-    $path = __DIR__ . '/images/' . $fichier;
+Flight::route('GET /images/@file', function($file) {
+    $path = __DIR__ . '/images/' . $file;
     if (file_exists($path)) {
         $mime = mime_content_type($path);
         header('Content-Type: ' . $mime);

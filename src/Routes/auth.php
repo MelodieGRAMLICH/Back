@@ -2,8 +2,8 @@
 
 require __DIR__ . '/../Controllers/AuthController.php';
 
-Flight::route('POST /api/register', ['AuthController', 'inscription']);
+Flight::route('POST /api/register', ['AuthController', 'register']);
 
-Flight::route('POST /api/login', ['AuthController', 'connexion']);
+Flight::route('POST /api/login', ['AuthController', 'login']);
 
-Flight::route('GET /api/me', ['AuthController', 'monProfil']);
+Flight::route('GET /api/me', ['AuthController', 'myProfile']);
